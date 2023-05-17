@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "name": "journeyman",
+    "version-string": "0.0.1",
+    "port-version": 0,
+    "description": "",
+    "homepage": "",
+    "license": "Apache-2.0",
+    "features": {
+        "plugin": {
+            "description": "Build the SKSE plugin.",
+            "dependencies": [
+              "articuno",
+              "commonlibsse-ng",
+              "xbyak",
+              "simpleini"
+            ]
+        }
+    },
+    "default-features": [
+        "plugin"
+    ]
+}
