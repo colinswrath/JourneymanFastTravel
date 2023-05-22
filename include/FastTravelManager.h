@@ -5,6 +5,7 @@ class FastTravelManager
 public:
 	
 	static bool InstallCanFastTravelCheck();
+	static bool InstallPapyrusFastTravelCheck();
 
 	static bool IsOnFlyingMount(RE::Actor* a_actor)
 	{
@@ -20,7 +21,23 @@ public:
 		return func(a_actor, a_arg2);
 	}
 
-protected:
+	static bool IsFastTravelEnabled()
+	{
+		using func_t = decltype(&FastTravelManager::IsFastTravelEnabled);
+		REL::Relocation<func_t> func{ REL::ID(55481)};
+		return func();
+	}
+
+	static void EnableFastTravel(bool a_enable)
+	{
+		using func_t = decltype(&FastTravelManager::EnableFastTravel);
+		REL::Relocation<func_t> func{ REL::ID(55563) };
+		return func(a_enable);
+	}
+
+	inline static RE::TESWorldSpace* GetWorldSpaceHook(RE::TESObjectREFR* a1);
+	inline static REL::Relocation<decltype(GetWorldSpaceHook)> _GetWorldSpaceHook;
 	inline static bool CanFastTravelMap(RE::Actor* actor, bool a_bool);
 	inline static REL::Relocation<decltype(CanFastTravelMap)> _CanFastTravelMap;
+
 };

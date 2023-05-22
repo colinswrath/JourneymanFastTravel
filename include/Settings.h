@@ -39,6 +39,7 @@ public:
 
 	RE::BGSListForm* RequiredItems;
 	bool needToShowRemoveMessage = false;
+	bool menuFastTravel = false;
 	std::string RequiredItemNotFoundMessage = "";
 	std::string TravelPackRemoveMessage = "";
 };

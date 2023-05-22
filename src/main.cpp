@@ -50,7 +50,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface * a_
 
     logger::info(FMT_STRING("Loading Fast Travel{}"), pluginDec->GetVersion());
 
-    SKSE::AllocTrampoline(24);
+    SKSE::AllocTrampoline(48);
 
     if (!Hooks::Install())
     {

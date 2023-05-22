@@ -1,4 +1,5 @@
 #pragma once
+#include "FastTravelManager.h"
 
 namespace Events
 {
@@ -17,25 +18,27 @@ namespace Events
 				return RE::BSEventNotifyControl::kContinue;
 			}
 
-			auto player = RE::PlayerCharacter::GetSingleton();
-			auto inv = player->GetInventory();
 			auto settings = Settings::GetSingleton();
+			auto player = RE::PlayerCharacter::GetSingleton();
+			if (settings->menuFastTravel && !FastTravelManager::IsOnFlyingMount(player)) {
+				auto inv = player->GetInventory();
+				for (const auto& [item, data] : inv) {
+					if (settings->RequiredItems->HasForm(item->GetFormID())) {
 
-			for (const auto& [item, data] : inv) {
-				if (settings->RequiredItems->HasForm(item->GetFormID())) {
+						player->RemoveItem(
+							item,
+							1,
+							RE::ITEM_REMOVE_REASON::kRemove,
+							nullptr,
+							nullptr
+						);
 
-					player->RemoveItem(
-						item,
-						1,
-						RE::ITEM_REMOVE_REASON::kRemove,
-						nullptr,
-						nullptr
-					);
-
-					settings->needToShowRemoveMessage = true;
-					return RE::BSEventNotifyControl::kContinue;
+						settings->needToShowRemoveMessage = true;
+						break;
+					}
 				}
 			}
+			settings->menuFastTravel = false;
 			return RE::BSEventNotifyControl::kContinue;
 		}
 
@@ -57,16 +60,40 @@ namespace Events
 
 		RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
 		{
-			if (!a_event || a_event->opening || a_event->menuName != "Loading Menu") {
+			if (!a_event) {
 				return RE::BSEventNotifyControl::kContinue;
 			}
+			/*logger::info(FMT_STRING("Menu {}: {}"), a_event->menuName, a_event->opening ? "Opening" : "Closing");
+			logger::info(FMT_STRING("Map Menu open? {}"), RE::UI::GetSingleton()->IsMenuOpen(RE::MapMenu::MENU_NAME));*/
+			if (a_event->menuName == RE::MistMenu::MENU_NAME && !a_event->opening) {
+				auto settings = Settings::GetSingleton();
+				if (settings->needToShowRemoveMessage) {
 
-			auto settings = Settings::GetSingleton();
-
-			if (settings->needToShowRemoveMessage) {
-				settings->needToShowRemoveMessage = false;
-				RE::DebugNotification(settings->TravelPackRemoveMessage.c_str(),"ITMGenericDownSD");
+					settings->needToShowRemoveMessage = false;
+					RE::DebugNotification(settings->TravelPackRemoveMessage.c_str(),"ITMGenericDownSD");
+					settings->menuFastTravel = false;
+				}
 			}
+			else if (a_event->menuName == RE::TweenMenu::MENU_NAME && a_event->opening) {
+				auto settings = Settings::GetSingleton();
+				settings->menuFastTravel = false;
+			}
+			else if (a_event->menuName == RE::CursorMenu::MENU_NAME) {
+				FastTravelManager::EnableFastTravel(true);
+			}
+			else if (a_event->menuName == RE::BookMenu::MENU_NAME) {
+				auto settings = Settings::GetSingleton();
+				settings->menuFastTravel = false;
+			}
+			else if (a_event->menuName == RE::InventoryMenu::MENU_NAME) {
+				auto settings = Settings::GetSingleton();
+				settings->menuFastTravel = false;
+			}
+			else if (a_event->menuName == RE::DialogueMenu::MENU_NAME) {
+				auto settings = Settings::GetSingleton();
+				settings->menuFastTravel = false;
+			}
+
 			return RE::BSEventNotifyControl::kContinue;
 		}
 
