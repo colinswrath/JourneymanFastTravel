@@ -1,5 +1,6 @@
 #pragma once
 #include "FastTravelManager.h"
+#include "Settings.h"
 
 namespace Events
 {
@@ -19,6 +20,11 @@ namespace Events
 			}
 
 			auto settings = Settings::GetSingleton();
+			if (settings->EnableOnlyOnSM == true && settings->Survival_ModeEnabledShared->value == 0.0f) {
+				settings->menuFastTravel = false;
+				return RE::BSEventNotifyControl::kContinue;
+			}
+
 			auto player = RE::PlayerCharacter::GetSingleton();
 			if (settings->menuFastTravel && !FastTravelManager::IsOnFlyingMount(player)) {
 				auto inv = player->GetInventory();
@@ -63,8 +69,14 @@ namespace Events
 			if (!a_event) {
 				return RE::BSEventNotifyControl::kContinue;
 			}
-			/*logger::info(FMT_STRING("Menu {}: {}"), a_event->menuName, a_event->opening ? "Opening" : "Closing");
-			logger::info(FMT_STRING("Map Menu open? {}"), RE::UI::GetSingleton()->IsMenuOpen(RE::MapMenu::MENU_NAME));*/
+
+			auto settings = Settings::GetSingleton();
+			if (settings->EnableOnlyOnSM == true && settings->Survival_ModeEnabledShared->value == 0.0f) {
+				settings->menuFastTravel = false;
+				settings->needToShowRemoveMessage = false;
+				return RE::BSEventNotifyControl::kContinue;
+			}
+
 			if (a_event->menuName == RE::MistMenu::MENU_NAME && !a_event->opening) {
 				auto settings = Settings::GetSingleton();
 				if (settings->needToShowRemoveMessage) {

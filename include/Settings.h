@@ -24,6 +24,8 @@ public:
 		std::string ft(ini.GetValue("","sNoTravelPackMessage","FILL TRAVEL FAILED IN INI"));
 		std::string tpr(ini.GetValue("","sTravelPackRemoveMessage","FILL TRAVEL PACK MESSAGE IN INI"));
 
+		EnableOnlyOnSM = ini.GetBoolValue("", "bEnableOnlyOnSurvivalEnabled");
+
 		RequiredItemNotFoundMessage = ft;
 		TravelPackRemoveMessage = tpr;
 		logger::info("Message loaded");
@@ -33,13 +35,17 @@ public:
 		}
 
 		RequiredItems = RE::TESDataHandler::GetSingleton()->LookupForm(RE::FormID(0x800), "Journeyman.esp")->As<RE::BGSListForm>();
+		Survival_ModeEnabledShared = dataHandler->LookupForm(RE::FormID(0x314A), "Update.esm")->As<RE::TESGlobal>();
 		logger::info("Settings loaded");
 
 	}
 
 	RE::BGSListForm* RequiredItems;
+	RE::TESGlobal* Survival_ModeEnabledShared;
+
 	bool needToShowRemoveMessage = false;
 	bool menuFastTravel = false;
 	std::string RequiredItemNotFoundMessage = "";
 	std::string TravelPackRemoveMessage = "";
+	bool EnableOnlyOnSM = false;
 };
