@@ -35,6 +35,10 @@ public:
 		}
 
 		RequiredItems = RE::TESDataHandler::GetSingleton()->LookupForm(RE::FormID(0x800), "Journeyman.esp")->As<RE::BGSListForm>();
+		MAG_IsFeatureLocked = RE::TESDataHandler::GetSingleton()->LookupForm(RE::FormID(0x854), "Journeyman.esp")->As<RE::TESGlobal>();
+
+		MAG_IsFeatureLocked->value = EnableOnlyOnSM;
+
 		Survival_ModeEnabledShared = dataHandler->LookupForm(RE::FormID(0x314A), "Update.esm")->As<RE::TESGlobal>();
 		logger::info("Settings loaded");
 
@@ -42,6 +46,7 @@ public:
 
 	RE::BGSListForm* RequiredItems;
 	RE::TESGlobal* Survival_ModeEnabledShared;
+	RE::TESGlobal* MAG_IsFeatureLocked;
 
 	bool needToShowRemoveMessage = false;
 	bool menuFastTravel = false;
