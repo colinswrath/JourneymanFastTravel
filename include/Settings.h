@@ -21,7 +21,7 @@ public:
 		ini.LoadFile(R"(.\Data\SKSE\Plugins\Journeyman.ini)");
 		const auto dataHandler = RE::TESDataHandler::GetSingleton();
 
-		std::string ft(ini.GetValue("","sNoTravelPackMessage","FILL TRAVEL FAILED IN INI"));
+		std::string ft(ini.GetValue("","sNoTravelPackMessage",""));
 		std::string tpr(ini.GetValue("","sTravelPackRemoveMessage","FILL TRAVEL PACK MESSAGE IN INI"));
 
 		EnableOnlyOnSM = ini.GetBoolValue("", "bEnableOnlyOnSurvivalEnabled");

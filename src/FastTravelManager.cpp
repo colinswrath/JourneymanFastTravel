@@ -31,8 +31,9 @@ bool FastTravelManager::CanFastTravelMap(RE::Actor* a_actor, bool a_bool)
 {
 	auto inv = a_actor->GetInventory();
 	auto settings = Settings::GetSingleton();
+	auto player = RE::PlayerCharacter::GetSingleton();
 
-	if (!settings->EnableOnlyOnSM || settings->Survival_ModeEnabledShared->value == 1.0f) {
+	if ((!settings->EnableOnlyOnSM || settings->Survival_ModeEnabledShared->value == 1.0f) && !player->IsGodMode()) {
 		for (const auto& [item, data] : inv) {
 			if (settings->RequiredItems->HasForm(item->GetFormID())) {
 
