@@ -38,6 +38,8 @@ void InitListener(SKSE::MessagingInterface::Message* a_msg)
 
         Settings::GetSingleton()->LoadSettings();
         break;
+    case SKSE::MessagingInterface::kPostLoadGame:
+        Settings::GetSingleton()->UpdateFeatureLocked();
     }
 }
 

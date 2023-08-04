@@ -34,10 +34,15 @@ bool FastTravelManager::CanFastTravelMap(RE::Actor* a_actor, bool a_bool)
 	auto player = RE::PlayerCharacter::GetSingleton();
 
 	if ((!settings->EnableOnlyOnSM || settings->Survival_ModeEnabledShared->value == 1.0f) && !player->IsGodMode()) {
+		
+		if (IsOnFlyingMount(a_actor)) {
+			return true;
+		}
+
 		for (const auto& [item, data] : inv) {
 			if (settings->RequiredItems->HasForm(item->GetFormID())) {
 
-				if (IsOnFlyingMount(a_actor) || _CanFastTravelMap(a_actor, a_bool)) {
+				if (_CanFastTravelMap(a_actor, a_bool)) {
 					settings->menuFastTravel = true;
 					return true;
 				}
@@ -48,7 +53,7 @@ bool FastTravelManager::CanFastTravelMap(RE::Actor* a_actor, bool a_bool)
 		}
 	}
 	else {
-		return _CanFastTravelMap(a_actor, a_bool);
+		return IsOnFlyingMount(a_actor) || _CanFastTravelMap(a_actor, a_bool);
 	}
 
 	//If you get to here you didnt have the required item/s and you can't travel
