@@ -35,9 +35,12 @@ void InitListener(SKSE::MessagingInterface::Message* a_msg)
     {
     case SKSE::MessagingInterface::kNewGame:
     case SKSE::MessagingInterface::kDataLoaded:
-
         Settings::GetSingleton()->LoadSettings();
+        Events::OnFastTravelEndEventHandler::Register();
+        Events::OnMenuCloseHandler::Register();
         break;
+    case SKSE::MessagingInterface::kPostLoadGame:
+        Settings::GetSingleton()->UpdateFeatureLocked();
     }
 }
 
@@ -63,12 +66,6 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface * a_
     {
         return false;
     }
-
-    Events::OnFastTravelEndEventHandler::Register();
-    Events::OnMenuCloseHandler::Register();
-
-    //Settings::LoadJsonFile();
-    //Settings::ParsePreLoadSettings();
 
     logger::info("Fast Travel loaded");
 
