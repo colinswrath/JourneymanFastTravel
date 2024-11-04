@@ -78,7 +78,6 @@ namespace Events
 			}
 
 			if (a_event->menuName == RE::MistMenu::MENU_NAME && !a_event->opening) {
-				auto settings = Settings::GetSingleton();
 				if (settings->needToShowRemoveMessage) {
 
 					settings->needToShowRemoveMessage = false;
@@ -87,22 +86,18 @@ namespace Events
 				}
 			}
 			else if (a_event->menuName == RE::TweenMenu::MENU_NAME && a_event->opening) {
-				auto settings = Settings::GetSingleton();
 				settings->menuFastTravel = false;
 			}
 			else if (a_event->menuName == RE::CursorMenu::MENU_NAME) {
-				FastTravelManager::EnableFastTravel(true);
+				FastTravelManager::EnableFastTravel(nullptr,nullptr,nullptr,true);
 			}
 			else if (a_event->menuName == RE::BookMenu::MENU_NAME) {
-				auto settings = Settings::GetSingleton();
 				settings->menuFastTravel = false;
 			}
 			else if (a_event->menuName == RE::InventoryMenu::MENU_NAME) {
-				auto settings = Settings::GetSingleton();
 				settings->menuFastTravel = false;
 			}
 			else if (a_event->menuName == RE::DialogueMenu::MENU_NAME) {
-				auto settings = Settings::GetSingleton();
 				settings->menuFastTravel = false;
 			}
 
