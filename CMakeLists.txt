@@ -1,110 +1,110 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.30)
 message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 
-########################################################################################################################
-## Define project
-########################################################################################################################
+# -------------------------------------------------- Setup project ----------------------------------------------------
 project(
-        Journeyman
-        VERSION 0.0.1
-        DESCRIPTION ""
-        LANGUAGES CXX)
+  JourneymanFastTravel
+  VERSION 1.0.0
+  LANGUAGES CXX
+)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-
-include(GNUInstallDirs)
+set(CMAKE_OPTIMIZE_DEPENDENCIES ON)
 
 configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in
-        ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-        @ONLY)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+  @ONLY
+)
 
-set(headers
-        include/Hooks.h
-        include/FastTravelManager.h
-        include/Settings.h
-        include/Events.h
-		)
-
-set(sources
-        src/FastTravelManager.cpp
-		src/main.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+# -------------------------------------------------- Add sources ------------------------------------------------------
+file(
+  GLOB_RECURSE
+  sources
+  CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+)
+list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/include/PCH.h)
 
 source_group(
-        TREE ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES
-        ${headers}
-        ${sources}
-		)
+  TREE ${CMAKE_CURRENT_SOURCE_DIR}
+  FILES ${sources}
+)
 
-#########################################################################################################################
-### Build options
-#########################################################################################################################
-message("Options:")
-option(BUILD_TESTS "Build unit tests." OFF)
-message("\tTests: ${BUILD_TESTS}")
-
-########################################################################################################################
-## Configure target DLL
-########################################################################################################################
+# -------------------------------------------------- Add dependencies -------------------------------------------------
 find_package(CommonLibSSE CONFIG REQUIRED)
-find_package(ryml CONFIG REQUIRED)
-find_path(ARTICUNO_INCLUDE_DIRS "articuno/articuno.h")
 
-add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${headers} ${sources})
-add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS "${PROJECT_NAME}")
+find_path(SIMPLEINI_INCLUDE_DIRS SimpleIni.h)
 
-target_include_directories(${PROJECT_NAME}
-        PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
-        $<INSTALL_INTERFACE:src>
-        ${ARTICUNO_INCLUDE_DIRS})
+# -------------------------------------------------- Setup DLL --------------------------------------------------------
+add_commonlibsse_plugin(
+  ${PROJECT_NAME}
+  AUTHOR colinswrath
+  SOURCES ${sources}
+)
 
-target_include_directories(${PROJECT_NAME}
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        ryml::ryml)
+target_include_directories(
+  ${PROJECT_NAME}
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${SIMPLEINI_INCLUDE_DIRS}
+)
 
-target_precompile_headers(${PROJECT_NAME}
-        PRIVATE
-        include/PCH.h)
+target_precompile_headers(
+  ${PROJECT_NAME}
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/PCH.h
+  ${SIMPLEINI_INCLUDE_DIRS}/SimpleIni.h
+)
 
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+target_compile_options(
+  ${PROJECT_NAME}
+  PRIVATE
+  /cgthreads8 /diagnostics:caret /jumptablerdata /MP /W4 /Zc:__cplusplus /Zc:enumTypes /Zc:inline /Zc:templateScope
+)
 
-install(TARGETS ${PROJECT_NAME}
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
+  target_compile_options(
+    ${PROJECT_NAME}
+    PRIVATE
+    /fp:fast /Ob3 /GL /GR- /Gw /Qpar
+  )
+  target_link_options(
+    ${PROJECT_NAME}
+    PRIVATE
+    /CGTHREADS:8 /INCREMENTAL:NO /OPT:REF,ICF=4
+  )
+endif()
 
-########################################################################################################################
-## Automatic plugin deployment
-########################################################################################################################
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(BUILD_NAME "Debug")
+# -------------------------------------------------- Post-build -------------------------------------------------------
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+  set(BUILD_NAME Debug)
 else()
-    set(BUILD_NAME "Release")
+  set(BUILD_NAME Release)
 endif()
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution/Plugin${BUILD_NAME}/")
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution/Plugin${BUILD_NAME}/")
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  COMMAND
+  ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Plugin${BUILD_NAME}/skse/plugins
+  COMMAND
+  ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Plugin${BUILD_NAME}/skse/plugins
+  COMMAND
+  ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Plugin${BUILD_NAME}/skse/plugins
+  COMMAND
+  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Config/${PROJECT_NAME}.ini ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Plugin${BUILD_NAME}/skse/plugins
+)
 
-if(${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${PROJECT_NAME}> "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution/Plugin${BUILD_NAME}/")
-endif()
+file(GLOB_RECURSE OUTPUT_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/*.dll)
+file(GLOB_RECURSE OUTPUT_PDBS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/*.pdb)
 
-file(GLOB_RECURSE OUTPUT_DLLS "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution/**/*.dll")
-file(GLOB_RECURSE OUTPUT_PDBS "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution/**/*.pdb")
-
-set_property(TARGET ${PROJECT_NAME}
-        APPEND PROPERTY ADDITIONAL_CLEAN_FILES "${OUTPUT_DLLS}")
-set_property(TARGET ${PROJECT_NAME}
-        APPEND PROPERTY ADDITIONAL_CLEAN_FILES "${OUTPUT_PDBS}")
+set_property(
+  TARGET ${PROJECT_NAME}
+  APPEND PROPERTY ADDITIONAL_CLEAN_FILES ${OUTPUT_DLLS} ${OUTPUT_PDBS}
+)
