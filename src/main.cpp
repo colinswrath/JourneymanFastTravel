@@ -1,73 +1,50 @@
-#include "Hooks.h"
-#include "Settings.h"
 #include "Events.h"
-#include <stddef.h>
+#include "Hooks.h"
+#include "Logging.h"
+#include "Settings.h"
 
-namespace {
-    
-    void InitializeLogging() {
-        auto path = SKSE::log::log_directory();
-        if (!path) {
-            SKSE::stl::report_and_fail("Unable to lookup SKSE logs directory.");
-        }
-        *path /= SKSE::PluginDeclaration::GetSingleton()->GetName();
-        *path += L".log";
-
-        std::shared_ptr<spdlog::logger> log;
-        if (IsDebuggerPresent()) {
-            log = std::make_shared<spdlog::logger>(
-                "Global", std::make_shared<spdlog::sinks::msvc_sink_mt>());
-        } else {
-            log = std::make_shared<spdlog::logger>(
-                "Global", std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true));
-        }
-        log->set_level(spdlog::level::info);
-        log->flush_on(spdlog::level::info);
-
-        spdlog::set_default_logger(std::move(log));
-        spdlog::set_pattern("[%H:%M:%S.%e]: %v");
-    }
-}
-
-void InitListener(SKSE::MessagingInterface::Message* a_msg)
+void Listener(SKSE::MessagingInterface::Message* message) noexcept
 {
-    switch (a_msg->type)
-    {
-    case SKSE::MessagingInterface::kNewGame:
+    switch (message->type) {
     case SKSE::MessagingInterface::kDataLoaded:
-        Settings::GetSingleton()->LoadSettings();
-        Events::OnFastTravelEndEventHandler::Register();
-        Events::OnMenuCloseHandler::Register();
+        Settings::LoadSettings();
+        Events::FastTravelEndEventHandler::Register();
+        Events::MenuOpenCloseEventHandler::Register();
+        Hooks::Install();
         break;
     case SKSE::MessagingInterface::kPostLoadGame:
-        Settings::GetSingleton()->UpdateFeatureLocked();
+        Settings::UpdateFeatureLocked();
+        break;
     }
 }
 
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface * a_skse)
+SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
-    InitializeLogging();
-    SKSE::Init(a_skse);
+    InitLogging();
 
-    auto pluginDec = SKSE::PluginDeclaration::GetSingleton();
+    const auto plugin{ SKSE::PluginDeclaration::GetSingleton() };
+    const auto name{ plugin->GetName() };
+    const auto version{ plugin->GetVersion() };
 
-    logger::info(FMT_STRING("Loading Fast Travel{}"), pluginDec->GetVersion());
+    logger::info("{} {} is loading...", name, version);
 
+    Init(skse);
+
+    // The following is only required if you use write_thunk_call or write_thunk_jump. If you aren't using
+    // those function, you can safely remove this line.
+    //
+    // To calculate the size of the trampoline, take the number of 5 byte write_call/write_branch, say p,
+    // and the number of 6 byte write_call/write_branch, say q. Then, the size of the trampoline is given
+    // by (p * 14) + (q * 8). E.g.: If you have two 5 byte write_calls and one 6 byte write_branch, the size
+    // of the trampoline should be (2 * 14) + (1 * 8) = 34.
     SKSE::AllocTrampoline(48);
 
-    if (!Hooks::Install())
-    {
-        logger::error("Install fast travel hooks failed");
+    if (const auto messaging{ SKSE::GetMessagingInterface() }; !messaging->RegisterListener(Listener)) {
         return false;
     }
 
-    auto messaging = SKSE::GetMessagingInterface();
-    if (!messaging->RegisterListener(InitListener))
-    {
-        return false;
-    }
-
-    logger::info("Fast Travel loaded");
+    logger::info("{} has finished loading.", name);
+    logger::info("");
 
     return true;
 }
