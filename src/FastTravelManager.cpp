@@ -28,37 +28,28 @@ RE::TESWorldSpace* FastTravelManager::GetWorldSpaceHook(RE::TESObjectREFR* a1)
 
 bool FastTravelManager::CanFastTravelMap(RE::Actor* a_actor, bool a_bool)
 {
-
-    auto inv      = a_actor->GetInventory();
-    auto player   = RE::PlayerCharacter::GetSingleton();
-
-    if ((!Settings::EnableOnlyOnSM || Settings::Survival_ModeEnabledShared->value == 1.0f) && !player->IsGodMode()) {
-
-        if (Utility::IsOnFlyingMount(a_actor)) {
-            return true;
-        }
-
-        for (const auto& [item, data] : inv) {
-            if (!item || !item->formID) {
-                continue;
-            }
-
-            if (Settings::RequiredItems->HasForm(item->GetFormID())) {
-
-                if (_CanFastTravelMap(a_actor, a_bool)) {
-                    Settings::menuFastTravel = true;
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-        }
-    }
-    else {
+    auto player = RE::PlayerCharacter::GetSingleton();
+    if ((Settings::EnableOnlyOnSM && Settings::Survival_ModeEnabledShared->value == 0.0f) || player->IsGodMode()) {
         return Utility::IsOnFlyingMount(a_actor) || _CanFastTravelMap(a_actor, a_bool);
     }
-
+    if (Utility::IsOnFlyingMount(a_actor)) {
+        return true;
+    }
+    auto inv = a_actor->GetInventory();
+    for (const auto& [item, data] : inv) {
+        if (!item || !item->formID) {
+            continue;
+        }
+        if (Settings::RequiredItems->HasForm(item->GetFormID())) {
+            if (_CanFastTravelMap(a_actor, a_bool)) {
+                Settings::menuFastTravel = true;
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
     // If you get to here you didnt have the required item/s and you can't travel
     RE::DebugNotification(Settings::RequiredItemNotFoundMessage.c_str());
     return false;
