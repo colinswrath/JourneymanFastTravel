@@ -47,7 +47,7 @@ namespace Events
         if (a_event->menuName == RE::MistMenu::MENU_NAME && !a_event->opening) {
             if (Settings::needToShowRemoveMessage) {
                 Settings::needToShowRemoveMessage = false;
-                RE::DebugNotification(Settings::TravelPackRemoveMessage.c_str(), "ITMGenericDownSD");
+                RE::SendHUDMessage::ShowHUDMessage(Settings::TravelPackRemoveMessage.c_str(), "ITMGenericDownSD");
                 Settings::menuFastTravel = false;
             }
         }

@@ -1,34 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "journeymanfasttravel",
+  "version-semver": "1.3.0",
+  "license": "GPL-3.0-or-later",
+  "features": {
+    "commonlibsse-ng": {
+      "description": "Dependencies of clib-ng",
+      "dependencies": [ "fmt", "directxtk", "rapidcsv", "spdlog" ]
+    }
+  },
+  "default-features": [ "commonlibsse-ng" ],
   "dependencies": [
-    {
-      "name": "commonlibsse-ng",
-      "default-features": false,
-      "features": [
-        "flatrim"
-      ]
-    },
-    "simpleini"
+    "simpleini",
+    "xbyak",
+    "clib-util",
+    "nlohmann-json"
   ],
-  "builtin-baseline": "9d163f0612f75a49133cfd051f0ed997a24602d5",
-  "vcpkg-configuration": {
-    "registries": [
-      {
-        "kind": "git",
-        "baseline": "c6d868d34b65ebd9119d0a2698bf50a85c7ec7c8",
-        "repository": "https://github.com/ThirdEyeSqueegee/CommonLibSSE-NG-vcpkg",
-        "packages": [
-          "commonlibsse-ng"
-        ]
-      },
-      {
-        "kind": "git",
-        "baseline": "6abaa8a737b8e8318ee7597fee5c5d5e639f8ad0",
-        "repository": "https://github.com/ThirdEyeSqueegee/vcpkg-ports",
-        "packages": [
-          "spdlog"
-        ]
-      }
-    ]
-  }
+  "builtin-baseline": "294f76666c3000630d828703e675814c05a4fd43"
 }

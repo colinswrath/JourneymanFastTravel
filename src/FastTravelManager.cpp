@@ -60,6 +60,6 @@ bool FastTravelManager::CanFastTravelMap(RE::Actor* a_actor, bool a_bool)
     }
 
     // If you get to here you didnt have the required item/s and you can't travel
-    RE::DebugNotification(Settings::RequiredItemNotFoundMessage.c_str());
+    RE::SendHUDMessage::ShowHUDMessage(Settings::RequiredItemNotFoundMessage.c_str());
     return false;
 }
