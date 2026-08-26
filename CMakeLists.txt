@@ -1,16 +1,25 @@
 cmake_minimum_required(VERSION 3.30)
 message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 
-# -------------------------------------------------- Setup project ----------------------------------------------------
 project(
-  JourneymanFastTravel
-  VERSION 1.0.0
+  Journeyman
+  VERSION 2.0.0
   LANGUAGES CXX
 )
 
+#Enable for 1130 changes
+set(BUILD_SKYRIMAE1130 ON)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 set(CMAKE_OPTIMIZE_DEPENDENCIES ON)
+set(SKSE_SUPPORT_XBYAK ON)
+
+set(ENABLE_SKYRIM_VR OFF)
+
+include(GNUInstallDirs)
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in
@@ -18,74 +27,86 @@ configure_file(
   @ONLY
 )
 
-# -------------------------------------------------- Add sources ------------------------------------------------------
+set(PUBLIC_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME})
+
+# Add headers
+file(
+  GLOB_RECURSE
+  headers
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+)
+list(REMOVE_ITEM headers ${CMAKE_CURRENT_SOURCE_DIR}/include/PCH.h)
+
+# Add sources
 file(
   GLOB_RECURSE
   sources
-  CONFIGURE_DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
   ${CMAKE_CURRENT_BINARY_DIR}/version.rc
 )
-list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/include/PCH.h)
 
 source_group(
   TREE ${CMAKE_CURRENT_SOURCE_DIR}
-  FILES ${sources}
+  FILES ${headers} ${sources}
 )
 
-# -------------------------------------------------- Add dependencies -------------------------------------------------
-find_package(CommonLibSSE CONFIG REQUIRED)
+set(BUILD_TESTS OFF)
+add_subdirectory(extern/CommonLibSSE-NG)
+include(extern/CommonLibSSE-NG/cmake/CommonLibSSE.cmake)
 
-find_path(SIMPLEINI_INCLUDE_DIRS SimpleIni.h)
-
-# -------------------------------------------------- Setup DLL --------------------------------------------------------
 add_commonlibsse_plugin(
   ${PROJECT_NAME}
   AUTHOR colinswrath
-  SOURCES ${sources}
+  SOURCES ${headers} ${sources}
 )
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
+find_path(SIMPLEINI_INCLUDE_DIRS "SimpleIni.h")
+
+# target_link_libraries(
+# ${PROJECT_NAME}
+# PRIVATE
+# SomeLibrary::SomeLibrary
+# )
 target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
+  $<INSTALL_INTERFACE:src>
   ${SIMPLEINI_INCLUDE_DIRS}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
 target_precompile_headers(
   ${PROJECT_NAME}
   PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/PCH.h
+  include/PCH.h
   ${SIMPLEINI_INCLUDE_DIRS}/SimpleIni.h
 )
 
-target_compile_options(
-  ${PROJECT_NAME}
-  PRIVATE
-  /cgthreads8 /diagnostics:caret /jumptablerdata /MP /W4 /Zc:__cplusplus /Zc:enumTypes /Zc:inline /Zc:templateScope
+install(
+  DIRECTORY ${PUBLIC_HEADER_DIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
-  target_compile_options(
-    ${PROJECT_NAME}
-    PRIVATE
-    /fp:fast /Ob3 /GL /GR- /Gw /Qpar
-  )
-  target_link_options(
-    ${PROJECT_NAME}
-    PRIVATE
-    /CGTHREADS:8 /INCREMENTAL:NO /OPT:REF,ICF=4
-  )
-endif()
+install(
+  TARGETS ${PROJECT_NAME}
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
-# -------------------------------------------------- Post-build -------------------------------------------------------
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
   set(BUILD_NAME Debug)
 else()
   set(BUILD_NAME Release)
+endif()
+
+if(BUILD_SKYRIMAE1130)
+  set(BUILD_NAME ${BUILD_NAME}1130)
 endif()
 
 add_custom_command(
@@ -101,8 +122,8 @@ add_custom_command(
   ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Config/${PROJECT_NAME}.ini ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Plugin${BUILD_NAME}/skse/plugins
 )
 
-file(GLOB_RECURSE OUTPUT_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/*.dll)
-file(GLOB_RECURSE OUTPUT_PDBS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/*.pdb)
+file(GLOB_RECURSE OUTPUT_DLLS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/**/*.dll)
+file(GLOB_RECURSE OUTPUT_PDBS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/**/*.pdb)
 
 set_property(
   TARGET ${PROJECT_NAME}

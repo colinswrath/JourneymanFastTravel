@@ -1,0 +1,20 @@
+
+## What does it do?  
+
+**Current functionality includes:**  
+`Apply set mult to disenchanting XP` - Can be adjusted in the json
+`Enchanting XP is increased based on the type of soul gem you are enchanting with` - Can be adjusted in the json
+
+## Requirements
+* [CMake](https://cmake.org/)
+	* Add this to your `PATH`
+* [PowerShell](https://github.com/PowerShell/PowerShell/releases/latest)
+* [Vcpkg](https://github.com/microsoft/vcpkg)
+	* Add the environment variable `VCPKG_ROOT` with the value as the path to the folder containing vcpkg
+* [Visual Studio Community 2019](https://visualstudio.microsoft.com/)
+	* Desktop development with C++
+
+## Register Visual Studio as a Generator
+* Open `x64 Native Tools Command Prompt`
+* Run `cmake`
+* Close the cmd window
