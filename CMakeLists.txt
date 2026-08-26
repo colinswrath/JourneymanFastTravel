@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 
 project(
-  JourneymanFastTravel
+  Journeyman
   VERSION 2.0.0
   LANGUAGES CXX
 )
